@@ -1,66 +1,57 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
 # Tabela com aumento de 3,93% de 2024 já aplicado
-# Valores originais da tabela (antes do reajuste de 2024):
-# I – Fundamental: 2.476,28; 2.600,09; 2.730,10; 2.866,60; 3.009,93; 3.160,43; 3.318,45
-# II – Ensino Médio ou Técnico: 2.730,10; 2.866,60; 3.009,93; 3.160,43; 3.318,45; 3.484,37
-# III – Graduação: 2.948,51; 3.095,93; 3.250,73; 3.413,26; 3.583,93; 3.763,12
-# IV – Pós-Graduação Lato Sensu: 3.184,39; 3.343,61; 3.510,79; 3.686,33; 3.870,64; 4.064,17
-# V – Pós-Graduação Stricto-Sensu (Mestrado): 3.439,14; 3.611,09; 3.791,65; 3.981,23; 4.180,29; 4.389,31
-# VI – Doutorado: 3.714,27; 3.899,98; 4.094,98; 4.299,73; 4.514,72; 4.740,45
-# Aplicando um reajuste de 3,93% (multiplicador 1,0393) em cada valor:
-
 tabela = {
     "I": {
-        "G": 2573.60,  # 2.476,28 * 1,0393
-        "F": 2702.27,  # 2.600,09 * 1,0393
-        "E": 2837.39,  # 2.730,10 * 1,0393
-        "D": 2979.26,  # 2.866,60 * 1,0393
-        "C": 3128.22,  # 3.009,93 * 1,0393
-        "B": 3284.64,  # 3.160,43 * 1,0393
-        "A": 3448.87   # 3.318,45 * 1,0393
+        "G": 2573.60,
+        "F": 2702.27,
+        "E": 2837.39,
+        "D": 2979.26,
+        "C": 3128.22,
+        "B": 3284.64,
+        "A": 3448.87
     },
     "II": {
-        "F": 2837.39,  # 2.730,10 * 1,0393
-        "E": 2979.26,  # 2.866,60 * 1,0393
-        "D": 3128.22,  # 3.009,93 * 1,0393
-        "C": 3284.64,  # 3.160,43 * 1,0393
-        "B": 3448.87,  # 3.318,45 * 1,0393
-        "A": 3621.31   # 3.484,37 * 1,0393 (aprox.)
+        "F": 2837.39,
+        "E": 2979.26,
+        "D": 3128.22,
+        "C": 3284.64,
+        "B": 3448.87,
+        "A": 3621.31
     },
     "III": {
-        "F": 3064.39,  # 2.948,51 * 1,0393 (aprox.)
-        "E": 3217.60,  # 3.095,93 * 1,0393 (aprox.)
-        "D": 3378.48,  # 3.250,73 * 1,0393 (aprox.)
-        "C": 3547.40,  # 3.413,26 * 1,0393 (aprox.)
-        "B": 3724.78,  # 3.583,93 * 1,0393 (aprox.)
-        "A": 3910.01   # 3.763,12 * 1,0393 (aprox.)
+        "F": 3064.39,
+        "E": 3217.60,
+        "D": 3378.48,
+        "C": 3547.40,
+        "B": 3724.78,
+        "A": 3910.01
     },
     "IV": {
-        "F": 3309.54,  # 3.184,39 * 1,0393 (aprox.)
-        "E": 3475.01,  # 3.343,61 * 1,0393 (aprox.)
-        "D": 3648.76,  # 3.510,79 * 1,0393 (aprox.)
-        "C": 3831.20,  # 3.686,33 * 1,0393 (aprox.)
-        "B": 4022.76,  # 3.870,64 * 1,0393 (aprox.)
-        "A": 4223.89   # 4.064,17 * 1,0393 (aprox.)
+        "F": 3309.54,
+        "E": 3475.01,
+        "D": 3648.76,
+        "C": 3831.20,
+        "B": 4022.76,
+        "A": 4223.89
     },
     "V": {
-        "F": 3574.30,  # 3.439,14 * 1,0393 (aprox.)
-        "E": 3752.99,  # 3.611,09 * 1,0393 (aprox.)
-        "D": 3940.66,  # 3.791,65 * 1,0393 (aprox.)
-        "C": 4137.69,  # 3.981,23 * 1,0393 (aprox.)
-        "B": 4344.58,  # 4.180,29 * 1,0393 (aprox.)
-        "A": 4561.81   # 4.389,31 * 1,0393 (aprox.)
+        "F": 3574.30,
+        "E": 3752.99,
+        "D": 3940.66,
+        "C": 4137.69,
+        "B": 4344.58,
+        "A": 4561.81
     },
     "VI": {
-        "F": 3860.24,  # 3.714,27 * 1,0393 (aprox.)
-        "E": 4053.25,  # 3.899,98 * 1,0393 (aprox.)
-        "D": 4255.91,  # 4.094,98 * 1,0393 (aprox.)
-        "C": 4468.71,  # 4.299,73 * 1,0393 (aprox.)
-        "B": 4692.15,  # 4.514,72 * 1,0393 (aprox.)
-        "A": 4926.75   # 4.740,45 * 1,0393 (aprox.)
+        "F": 3860.24,
+        "E": 4053.25,
+        "D": 4255.91,
+        "C": 4468.71,
+        "B": 4692.15,
+        "A": 4926.75
     }
 }
 
@@ -86,13 +77,6 @@ nivel_descricao = {
 }
 
 def calcular_verocard(salario_total):
-    """
-    Calcula o desconto do benefício Verocard conforme faixas salariais:
-      - Até R$ 3.699,40: desconto 0% (benefício integral de R$ 740,00).
-      - De R$ 3.699,41 a R$ 4.587,24: desconto de 50%.
-      - De R$ 4.587,25 a R$ 5.999,99: desconto de 63,5%.
-      - Acima de R$ 6.000,00: desconto de 100% (benefício zerado).
-    """
     beneficio = 740.00
     if salario_total <= 3699.40:
         return 0, beneficio
@@ -103,53 +87,103 @@ def calcular_verocard(salario_total):
     else:
         return 100, 0.00
 
+def analisar_poder_compra(salario_total):
+    ipca_percent = 4.83  
+    salario_minimo = 1518.00  
+    salario_real = salario_total / (1 + ipca_percent / 100)
+    qtd_minimos_nominal = salario_total / salario_minimo
+    qtd_minimos_real = salario_real / salario_minimo
+    return {
+        "ipca_percent": ipca_percent,
+        "salario_minimo": salario_minimo,
+        "salario_real": salario_real,
+        "qtd_minimos_nominal": qtd_minimos_nominal,
+        "qtd_minimos_real": qtd_minimos_real
+    }
+
+def calcular_ir(salario_bruto):
+    DESCONTO_SIMPLIFICADO = 564.80
+    base_ir = salario_bruto - DESCONTO_SIMPLIFICADO
+    if base_ir <= 2824.00:
+        return 0.0
+    elif base_ir <= 2826.65:
+        return (base_ir * 0.075) - 169.44
+    elif base_ir <= 3751.05:
+        return (base_ir * 0.15) - 381.44
+    elif base_ir <= 4664.68:
+        return (base_ir * 0.225) - 662.77
+    else:
+        return (base_ir * 0.275) - 896.00
+
+def brl_format(value):
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def simular(nivel, classe, quinquenios, dissidio_extra, vale_transporte):
+    # Se a classe for "G", use sempre o valor de "I" para essa classe
+    if classe == "G":
+        salario_base = tabela.get(nivel, {}).get(classe)
+        if salario_base is None:
+            salario_base = tabela["I"]["G"]
+    else:
+        salario_base = tabela.get(nivel, {}).get(classe)
+
+    if salario_base is None:
+        return {"error": "Combinação de nível e classe inválida."}
+
+    incremento_dissidio = salario_base * (dissidio_extra / 100)
+    salario_base_ajustado = salario_base + incremento_dissidio
+    adicional = salario_base_ajustado * 0.05 * quinquenios
+    tem_sexta_parte = (quinquenios >= 4)
+    sexta_parte_valor = salario_base_ajustado * (1/6) if tem_sexta_parte else 0
+    salario_total = salario_base_ajustado + adicional + sexta_parte_valor
+    vt_valor = salario_base_ajustado * 0.05 if vale_transporte == 'sim' else 0
+    verocard_desconto, verocard_valor_liq = calcular_verocard(salario_total)
+    fgprev_valor = salario_total * 0.14
+    salario_liquido_fgprev = salario_total - fgprev_valor
+    ir_valor = calcular_ir(salario_total)
+    salario_liquido_final = salario_liquido_fgprev - ir_valor - vt_valor
+    analise = analisar_poder_compra(salario_total)
+    return {
+        "salario_base_ajustado": salario_base_ajustado,
+        "incremento_dissidio": incremento_dissidio,
+        "salario_bruto": salario_total,
+        "salario_bruto_formatado": brl_format(salario_total),
+        "fgprev_valor": fgprev_valor,
+        "fgprev_valor_formatado": brl_format(fgprev_valor),
+        "ir_valor": ir_valor,
+        "ir_valor_formatado": brl_format(ir_valor),
+        "vt_valor": vt_valor,
+        "vt_valor_formatado": brl_format(vt_valor),
+        "salario_liquido_final": salario_liquido_final,
+        "salario_liquido_final_formatado": brl_format(salario_liquido_final),
+        "verocard_desconto": verocard_desconto,
+        "verocard_valor": brl_format(verocard_valor_liq),
+        "analise_poder_compra": analise
+    }
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     resultado = None
-
     if request.method == 'POST':
         nivel = request.form['nivel']
         classe = request.form['classe']
-        quinquenios = int(request.form['quinquenios'])
-
-        # Obtém o valor do dissídio extra (projetado), se informado; senão, 0.
+        quinquenios = int(request.form.get('quinquenios', 0))
         dissidio_extra_raw = request.form.get('dissidio_extra', '').replace(',', '.')
         dissidio_extra = float(dissidio_extra_raw) if dissidio_extra_raw else 0.0
-
-        salario_base = tabela.get(nivel, {}).get(classe)
-
-        if salario_base:
-            # Calcula o valor do acréscimo do dissídio
-            incremento_dissidio = salario_base * (dissidio_extra / 100)
-            # Aplica o acréscimo ao salário base (que já considera o reajuste de 3,93% de 2024)
-            salario_base_ajustado = salario_base + incremento_dissidio
-
-            adicional = salario_base_ajustado * 0.05 * quinquenios
-            tem_sexta_parte = quinquenios >= 4
-            sexta_parte_valor = salario_base_ajustado * (1/6) if tem_sexta_parte else 0
-            salario_total = salario_base_ajustado + adicional + sexta_parte_valor
-
-            # Cálculo do Verocard
-            desconto_perc, valor_liquido = calcular_verocard(salario_total)
-
-            resultado = {
-                "nivel": nivel,
-                "nivel_descricao": nivel_descricao.get(nivel, ""),
-                "classe": classe,
-                "quinquenios": quinquenios,
-                "anos_classe": classe_anos[classe],
-                "dissidio_extra": dissidio_extra if dissidio_extra > 0 else None,
-                "incremento_dissidio": f"R$ {incremento_dissidio:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if dissidio_extra > 0 else None,
-                "salario_base": f"R$ {salario_base_ajustado:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                "adicional": f"R$ {adicional:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                "sexta_parte": f"R$ {sexta_parte_valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if tem_sexta_parte else None,
-                "salario_total": salario_total,
-                "salario_total_formatado": f"R$ {salario_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
-                "verocard_desconto": desconto_perc,
-                "verocard_valor": f"R$ {valor_liquido:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            }
-
+        vale_transporte = request.form.get('vale_transporte', 'nao').lower()
+        
+        resultado = simular(nivel, classe, quinquenios, dissidio_extra, vale_transporte)
     return render_template('index.html', resultado=resultado)
+
+@app.route('/simulate', methods=['GET'])
+def simulate():
+    nivel = request.args.get('nivel')
+    classe = request.args.get('classe')
+    quinquenios = int(request.args.get('quinquenios', 0))
+    dissidio_extra = float(request.args.get('dissidio_extra', 0))
+    vale_transporte = request.args.get('vale_transporte', 'nao').lower()
+    resultado = simular(nivel, classe, quinquenios, dissidio_extra, vale_transporte)
+    return jsonify(resultado)
 
 if __name__ == '__main__':
     app.run(debug=True)
